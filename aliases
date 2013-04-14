@@ -1,0 +1,23 @@
+alias gs='git status; git submodule status'
+alias ga='git add'
+alias gull='git pull'
+alias gush='git push'
+alias gsh='git show'
+alias gl='git log'
+alias gb='git branch'
+alias gco='git checkout'
+alias gd='git diff'
+
+alias a='ga'
+alias s='gs'
+alias c='gc'
+alias u='gull'
+alias p='gush'
+alias d='gd'
+alias o='gco'
+alias b="gb"
+
+function gc {
+  git commit -am "$1"
+}
+
