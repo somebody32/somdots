@@ -1,0 +1,81 @@
+vu() {
+  __get_vm_info
+
+  if [ $? != 1 ];
+  then
+    prlctl start $NAME
+
+    echo 'Mounting code folder...'
+    until eval "sudo mount -o noowners,soft $HOST:/home/vagrant/$NAME ./code" > /dev/null 2>&1; do
+      sleep 10
+    done
+
+    echo "Forwarding ports..."
+    __up_tunnels
+  fi
+}
+
+vd() {
+  __get_vm_info
+
+  if [ $? != 1 ];
+  then
+    __unmount_code
+    __down_ssh
+    prlctl suspend $NAME
+  fi
+}
+
+vh() {
+  __get_vm_info
+
+  if [ $? != 1 ];
+  then
+    __unmount_code
+    __down_ssh
+    prlctl stop $NAME
+  fi
+}
+
+vs() {
+  __get_vm_info
+
+  if [ $? != 1 ];
+  then
+    `__ssh_to_vm`
+  fi
+}
+
+__unmount_code() {
+  sudo umount -f ./code
+}
+
+__ssh_to_vm() {
+  echo "ssh vagrant@$HOST"
+}
+
+__up_tunnels() {
+  __down_ssh
+  local tunnels
+  tunnels=`echo $FW_PORTS | xargs -n1 -IPORT echo "ssh vagrant@$HOST -L "PORT":localhost:"PORT" -f -N"`
+
+  for tunnel in ${tunnels};
+  do
+    eval $tunnel
+  done
+}
+
+__down_ssh() {
+  killall `__ssh_to_vm` > /dev/null 2>&1
+}
+
+__get_vm_info() {
+  local CONFIG="./.vm_config"
+  if [ ! -f $CONFIG ];
+  then
+    echo "No VM config file found, aborting"
+    return 1
+  else
+    . ./.vm_config
+  fi
+}
