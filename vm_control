@@ -57,7 +57,7 @@ __ssh_to_vm() {
 __up_tunnels() {
   __down_ssh
   local tunnels
-  tunnels=`echo $FW_PORTS | xargs -n1 -IPORT echo "ssh vagrant@$HOST -L "PORT":localhost:"PORT" -f -N"`
+  tunnels=`echo $FW_PORTS | xargs -n1 -IPORT echo "ssh -o TCPKeepAlive=yes vagrant@$HOST -L "PORT":localhost:"PORT" -f -N"`
 
   for tunnel in ${tunnels};
   do
