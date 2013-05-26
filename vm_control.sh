@@ -1,17 +1,19 @@
+#!/bin/bash
+
 vu() {
   __get_vm_info
 
   if [ $? != 1 ];
   then
-    prlctl start $NAME
+    prlctl start $__VM_NAME
 
     echo 'Mounting code folder...'
-    until eval "sudo mount -o noowners,soft $HOST:/home/vagrant/$NAME ./code" > /dev/null 2>&1; do
+    until eval "sudo mount -o noowners,soft $__VM_HOST:/home/vagrant/$__VM_NAME ./code" > /dev/null 2>&1; do
       sleep 10
     done
 
     echo "Forwarding ports..."
-    __up_tunnels
+    forward_ports_to_vm
   fi
 }
 
@@ -22,7 +24,7 @@ vd() {
   then
     __unmount_code
     __down_ssh
-    prlctl suspend $NAME
+    prlctl suspend $__VM_NAME
   fi
 }
 
@@ -33,7 +35,7 @@ vh() {
   then
     __unmount_code
     __down_ssh
-    prlctl stop $NAME
+    prlctl stop $__VM_NAME
   fi
 }
 
@@ -46,18 +48,28 @@ vs() {
   fi
 }
 
+forward_ports_to_vm() {
+  __get_vm_info
+
+  if [ -z "$1" ]
+  then
+    __up_tunnels $__VM_FW_PORTS
+  else
+    __up_tunnels "$@"
+  fi
+}
+
 __unmount_code() {
   sudo umount -f ./code
 }
 
 __ssh_to_vm() {
-  echo "ssh vagrant@$HOST"
+  echo "ssh vagrant@$__VM_HOST"
 }
 
 __up_tunnels() {
-  __down_ssh
   local tunnels
-  tunnels=`echo $FW_PORTS | xargs -n1 -IPORT echo "ssh -o TCPKeepAlive=yes vagrant@$HOST -L "PORT":localhost:"PORT" -f -N"`
+  tunnels=`echo "$@" | xargs -n1 -IPORT echo "ssh -o TCPKeepAlive=yes vagrant@$__VM_HOST -L "PORT":localhost:"PORT" -f -N"`
 
   for tunnel in ${tunnels};
   do
@@ -66,7 +78,7 @@ __up_tunnels() {
 }
 
 __down_ssh() {
-  killall `__ssh_to_vm` > /dev/null 2>&1
+  ps ux | grep "ssh .* vagrant@$__VM_HOST" | awk '{print $2}' | xargs kill > /dev/null 2>&1
 }
 
 __get_vm_info() {
