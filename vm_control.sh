@@ -13,7 +13,7 @@ vu() {
     done
 
     echo "Forwarding ports..."
-    forward_ports_to_vm
+    fw
   fi
 }
 
@@ -48,7 +48,7 @@ vs() {
   fi
 }
 
-forward_ports_to_vm() {
+fw() {
   __get_vm_info
 
   if [ -z "$1" ]
